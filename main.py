@@ -1,24 +1,70 @@
 import dask.dataframe as dd
 from dask.distributed import Client
 import os
+import urllib
 
 PARKING_VIOLATIONS_2024 = (
     "https://data.cityofnewyork.us/resource/pvqr-7yc4.csv?$limit=13000000"
 )
+PARKING_VIOLATIONS_2023 = (
+    "https://data.cityofnewyork.us/api/views/869v-vr48/rows.csv?accessType=DOWNLOAD"
+)
+PARKING_VIOLATIONS_2022 = (
+    "https://data.cityofnewyork.us/api/views/7mxj-7a6y/rows.csv?accessType=DOWNLOAD"
+)
+PARKING_VIOLATIONS_2020 = (
+    "https://data.cityofnewyork.us/api/views/p7t3-5i9s/rows.csv?accessType=DOWNLOAD"
+)
+PARKING_VIOLATIONS_2019 = (
+    "https://data.cityofnewyork.us/api/views/faiq-9dfq/rows.csv?accessType=DOWNLOAD"
+)
+PARKING_VIOLATIONS_2018 = (
+    "https://data.cityofnewyork.us/api/views/a5td-mswe/rows.csv?accessType=DOWNLOAD"
+)
+PARKING_VIOLATIONS_2017 = (
+    "https://data.cityofnewyork.us/api/views/2bnn-yakx/rows.csv?accessType=DOWNLOAD"
+)
+PARKING_VIOLATIONS_2016 = (
+    "https://data.cityofnewyork.us/api/views/kiv2-tbus/rows.csv?accessType=DOWNLOAD"
+)
+PARKING_VIOLATIONS_2015 = (
+    "https://data.cityofnewyork.us/api/views/c284-tqph/rows.csv?accessType=DOWNLOAD"
+)
+PARKING_VIOLATIONS_2014 = (
+    "https://data.cityofnewyork.us/api/views/jt7v-77mi/rows.csv?accessType=DOWNLOAD"
+)
+
+parking_violations = [
+    PARKING_VIOLATIONS_2024,
+    PARKING_VIOLATIONS_2023,
+    PARKING_VIOLATIONS_2022,
+    PARKING_VIOLATIONS_2020,
+    PARKING_VIOLATIONS_2019,
+    PARKING_VIOLATIONS_2018,
+    PARKING_VIOLATIONS_2017,
+    PARKING_VIOLATIONS_2016,
+    PARKING_VIOLATIONS_2015,
+    PARKING_VIOLATIONS_2014,
+]
 
 
-def download_data(data_path="data/parking_violations_2024.csv"):
+def download_data(data_folder="data"):
     """
     Downloads parking violations data from a specified URL and saves it to the given data path.
 
     Args:
-        data_path (str): The path where the downloaded data will be saved. Defaults to "data/parking_violations_2024.csv".
+        data_folder (str): The folder where the downloaded data will be saved. Defaults to "data".
 
     Returns:
         None
     """
-    if not os.path.exists(data_path):
-        os.system(f"wget -O {data_path} '{PARKING_VIOLATIONS_2024}'")
+    year = 2024
+    for url in parking_violations:
+        file_name = f"parking_violations_{year}.csv"
+        file_path = os.path.join(data_folder, file_name)
+        if not os.path.exists(file_path):
+            urllib.request.urlretrieve(url, file_path)
+        year -= 1
 
 
 class Task1:
@@ -147,6 +193,7 @@ class Task1:
 
 
 if __name__ == "__main__":
-    data_path = "data/parking_violations_2024.csv"
-    task1 = Task1(data_path)
-    print(task1.run())
+    # data_path = "data/parking_violations_2024.csv"
+    # task1 = Task1(data_path)
+    # print(task1.run())
+    download_data()
