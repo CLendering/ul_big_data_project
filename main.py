@@ -1,7 +1,11 @@
 import dask.dataframe as dd
 from dask.distributed import Client
+import pandas as pd
 import os
 import urllib
+from fuzzywuzzy import process
+import pandas as pd
+from collections import defaultdict
 
 PARKING_VIOLATIONS_2024 = (
     "https://data.cityofnewyork.us/resource/pvqr-7yc4.csv?$limit=13000000"
@@ -191,9 +195,87 @@ class Task1:
         hdf_size = os.path.getsize(hdf_file)
         return {"parquet_size": pq_size, "hdf_size": hdf_size}
 
+def create_column_mapping(reference_cols, current_cols):
+    """
+    Create a mapping from current_cols to reference_cols based on string similarity,
+    ensuring that no duplicate mappings are created.
+    """
+    used_names = set()  # To track names already used in the mapping
+    column_mapping = {}
+    similarity_scores = defaultdict(list)
+    
+    # First, gather all potential mappings with their scores
+    for current in current_cols:
+        for reference in reference_cols:
+            score = process.extractOne(current, [reference])[1]
+            similarity_scores[current].append((score, reference))
+    
+    # Sort potential mappings by score
+    for current, scores in similarity_scores.items():
+        sorted_scores = sorted(scores, key=lambda x: -x[0])  # Sort by score descending
+    
+        # Find the highest-score mapping that hasn't been used yet
+        for score, reference in sorted_scores:
+            if reference not in used_names:
+                column_mapping[current] = reference
+                used_names.add(reference)
+                break
+        else:
+            # If all scores are used, keep the original
+            column_mapping[current] = current
+    
+    return column_mapping
 
+def read_and_process_file(file, reference_cols, base_path='data/', temp_dir='temp/'):
+    """
+    Read a file, apply column renaming, and save the DataFrame to a temporary location.
+    Return the path to the temporary file.
+    """
+    # Ensure the temporary directory exists
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+
+    # Read the file with Dask
+    df = dd.read_csv(os.path.join(base_path, file), dtype='object')
+
+    # Create mapping and apply renaming
+    current_cols = df.columns
+    mapping = create_column_mapping(reference_cols, current_cols)
+    df = df.rename(columns=mapping)
+
+    # Path for the temporary file
+    temp_file = os.path.join(temp_dir, os.path.basename(file))
+    
+    # Save to Parquet to maintain data types correctly
+    df.to_parquet(temp_file)
+
+    return temp_file
+
+def process_all_files(directory='data/', reference_file='parking_violations_2024.csv', temp_dir='temp/'):
+    client = Client()
+    reference_path = os.path.join(directory, reference_file)
+    reference_df = pd.read_csv(reference_path, nrows=0)
+    reference_cols = list(reference_df.columns)
+
+    files = [f for f in os.listdir(directory) if f.endswith('.csv') and f != reference_file]
+    temp_files = [read_and_process_file(f, reference_cols, directory, temp_dir) for f in files]
+
+    # Read all temporary Parquet files into Dask DataFrames and concatenate
+    dataframes = [dd.read_parquet(file) for file in temp_files]
+    if dataframes:
+        combined_df = dd.concat(dataframes, axis=0, ignore_index=True)
+        combined_df.to_parquet('data/processed/combined_parking_violations.parquet', write_index=False)
+    else:
+        print("No dataframes to concatenate.")
+
+    client.close()
 if __name__ == "__main__":
     # data_path = "data/parking_violations_2024.csv"
     # task1 = Task1(data_path)
     # print(task1.run())
-    download_data()
+    #download_data()
+    # Create a mapping based on the 2024 file as the standard
+    process_all_files()
+
+    
+    #load_all_in_one_parquet()
