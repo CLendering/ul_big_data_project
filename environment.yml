@@ -209,6 +209,7 @@ dependencies:
   - pycparser=2.21=pyhd3eb1b0_0
   - pygments=2.15.1=py310h06a4308_1
   - pyopenssl=24.0.0=py310h06a4308_0
+  - pyparsing=3.1.2=pyhd8ed1ab_0
   - pyqt=5.15.10=py310h6a678d5_0
   - pyqt5-sip=12.13.0=py310h5eee18b_0
   - pysocks=1.7.1=pyha2e5f31_6
@@ -289,8 +290,10 @@ dependencies:
       - dynetml2other==0.11
       - flask==3.0.3
       - fonttools==4.50.0
+      - fuzzywuzzy==0.18.0
       - itsdangerous==2.2.0
       - kiwisolver==1.4.5
+      - levenshtein==0.25.1
       - llvmlite==0.42.0
       - matplotlib==3.8.3
       - multipledispatch==1.0.0
@@ -298,9 +301,11 @@ dependencies:
       - numba==0.59.1
       - pandas==2.2.2
       - pathspec==0.12.1
-      - pyparsing==3.1.2
+      - python-levenshtein==0.25.1
+      - rapidfuzz==3.9.0
       - scikit-learn==1.4.1.post1
       - seaborn==0.13.2
       - sparse==0.15.1
       - tokenize-rt==5.2.0
       - werkzeug==3.0.2
+prefix: /home/tico/anaconda3/envs/bigdata
