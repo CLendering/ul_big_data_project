@@ -1,0 +1,5 @@
+Businesses - https://data.cityofnewyork.us/Business/Businesses-dataset/jff5-ygbi/about_data
+Weather - https://www.ncei.noaa.gov/data/global-historical-climatology-network-daily/archive/
+Points of Interest - https://data.cityofnewyork.us/City-Government/Points-Of-Interest/rxuy-2muj
+Permitted Events - https://data.cityofnewyork.us/City-Government/NYC-Permitted-Event-Information-Historical/bkfu-528j/about_data
+School Locations - https://data.cityofnewyork.us/Education/School-Point-Locations/jfju-ynrr/about_data
