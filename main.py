@@ -61,7 +61,12 @@ def create_column_mapping(reference_cols, current_cols):
             column_mapping[current] = current
 
     return column_mapping
-
+# Define a function to limit string columns to 300 characters
+def limit_string_columns(df):
+    for col in df.columns:
+        if df[col].dtype == 'object':
+            df[col] = df[col].str.slice(0, 300)
+    return df
 
 def read_and_process_file(file, reference_cols, base_path="data/", temp_dir="temp/"):
     """
@@ -74,7 +79,8 @@ def read_and_process_file(file, reference_cols, base_path="data/", temp_dir="tem
 
     # Read the file with Dask
     df = dd.read_csv(os.path.join(base_path, file), dtype="object")
-
+    # Apply the function to each partition
+    df = df.map_partitions(limit_string_columns)
     # Create mapping and apply renaming
     current_cols = df.columns
     mapping = create_column_mapping(reference_cols, current_cols)
@@ -90,12 +96,13 @@ def read_and_process_file(file, reference_cols, base_path="data/", temp_dir="tem
 
 
 def process_all_files(directory="data/", reference_file="2024.csv", temp_dir="temp/"):
-    client = Client(
-        n_workers=2,
-        threads_per_worker=2,
-        memory_limit="5.5GB",
+    '''client = Client(
+        n_workers=12,
+        threads_per_worker=1,
+        memory_limit="3GB",
         local_directory="/tmp",
-    )
+    )'''
+    client = Client()
     reference_path = os.path.join(directory, reference_file)
     reference_df = pd.read_csv(reference_path, nrows=0)
     reference_cols = list(reference_df.columns)
@@ -200,7 +207,6 @@ def parquet_to_hdf5():
 
         file_path = os.path.join(parquet_directory, filename)
         parquet_file = pq.ParquetFile(file_path)
-
         # Print to output
         print(f"Processing file: {filename}", flush=True)
         print(f"Progress: {i + 1}/{length}; {((i+1)/length)*100}%", flush=True)
@@ -209,9 +215,9 @@ def parquet_to_hdf5():
         try:
             for batch in parquet_file.iter_batches(batch_size=batch_size):
                 df = batch.to_pandas()
-
+                print(df.columns)
                 # Limit string columns to 300 characters
-                df = df.map(lambda x: x[:300] if isinstance(x, str) else x)
+                #df = df.map(lambda x: x[:300] if isinstance(x, str) else x)
 
                 # Update min_itemsize for each string column
                 for col, dtype in df.dtypes.items():
